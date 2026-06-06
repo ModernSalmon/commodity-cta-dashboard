@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Commodity CTA Monitor</title>
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --ink: #17211d;
+      --muted: #6d736e;
+      --panel: rgba(255, 252, 244, 0.92);
+      --panel-strong: #fffaf0;
+      --line: #d9cfbb;
+      --amber: #c47a24;
+      --green: #16734a;
+      --red: #ad2f28;
+      --blue: #235b75;
+      --shadow: 0 22px 60px rgba(64, 48, 26, 0.14);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Avenir Next", "Gill Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(circle at 16% 8%, rgba(196, 122, 36, 0.20), transparent 24rem),
+        radial-gradient(circle at 92% 18%, rgba(35, 91, 117, 0.16), transparent 22rem),
+        linear-gradient(135deg, #f8f0dd 0%, #eef0e7 52%, #e9dfcf 100%);
+      min-height: 100vh;
+    }
+    header {
+      padding: 28px clamp(18px, 4vw, 48px) 18px;
+      border-bottom: 1px solid rgba(95, 79, 51, 0.18);
+    }
+    .brand {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .mark {
+      width: 54px;
+      height: 54px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: #1f2b25;
+      color: #f7d28a;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      box-shadow: var(--shadow);
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 58px);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+    }
+    .subtitle {
+      margin-top: 10px;
+      color: var(--muted);
+      max-width: 760px;
+      line-height: 1.6;
+    }
+    .status {
+      min-width: 260px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 250, 240, 0.72);
+      box-shadow: var(--shadow);
+    }
+    .status b { display: block; font-size: 14px; margin-bottom: 6px; }
+    .status span { display: block; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    main { padding: 22px clamp(14px, 4vw, 48px) 42px; }
+    .grid { display: grid; gap: 16px; }
+    .kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .metric { padding: 18px; }
+    .metric span { display: block; color: var(--muted); font-size: 12px; }
+    .metric b { display: block; margin-top: 8px; font-size: 26px; letter-spacing: -0.03em; }
+    .metric small { display: block; margin-top: 8px; color: var(--muted); }
+    .section {
+      margin-top: 18px;
+      padding: 18px;
+    }
+    .strategy-block {
+      border-left: 6px solid var(--blue);
+    }
+    .strategy-block.domestic {
+      border-left-color: var(--amber);
+    }
+    .strategy-block.eia {
+      border-left-color: var(--green);
+    }
+    .strategy-block.robustness {
+      border-left-color: var(--red);
+    }
+    .strategy-eyebrow {
+      display: inline-block;
+      margin-bottom: 8px;
+      padding: 4px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.42);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 14px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    h2 { margin: 0; font-size: 18px; letter-spacing: -0.02em; }
+    .note { color: var(--muted); font-size: 12px; }
+    .instrument-grid { grid-template-columns: repeat(5, minmax(220px, 1fr)); overflow-x: auto; }
+    .instrument {
+      min-height: 246px;
+      padding: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.58), rgba(255,247,230,0.62));
+    }
+    .instrument-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .symbol { color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .pill {
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .long { color: var(--green); background: rgba(22, 115, 74, 0.10); border-color: rgba(22, 115, 74, 0.20); }
+    .short { color: var(--red); background: rgba(173, 47, 40, 0.10); border-color: rgba(173, 47, 40, 0.20); }
+    .flat { color: var(--blue); background: rgba(35, 91, 117, 0.10); border-color: rgba(35, 91, 117, 0.20); }
+    .price { margin-top: 14px; font-size: 28px; font-weight: 800; letter-spacing: -0.04em; }
+    .change { margin-top: 2px; font-size: 13px; }
+    .bars { margin-top: 18px; display: grid; gap: 10px; }
+    .bar-row { display: grid; grid-template-columns: 54px 1fr 54px; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); }
+    .track { height: 8px; border-radius: 999px; background: #e5dccb; overflow: hidden; }
+    .fill { height: 100%; width: 0; border-radius: 999px; background: var(--amber); }
+    .instrument-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+    .mini {
+      border: 1px solid rgba(217, 207, 187, 0.75);
+      border-radius: 14px;
+      padding: 8px;
+      background: rgba(255,255,255,0.42);
+    }
+    .mini span { display: block; color: var(--muted); font-size: 11px; }
+    .mini b { display: block; margin-top: 3px; font-size: 14px; }
+    .two-col { grid-template-columns: 1.35fr 0.65fr; align-items: stretch; }
+    .spread-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 14px; }
+    .chart-pair { grid-template-columns: 1fr 1fr; }
+    .chart-box { padding: 10px 8px 2px; overflow-x: auto; }
+    svg { display: block; min-width: 640px; width: 100%; }
+    .axis { stroke: #7b7468; stroke-width: 1; }
+    .chart-line { fill: none; stroke: var(--blue); stroke-width: 2.4; }
+    .area { fill: rgba(35, 91, 117, 0.12); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 9px; border-top: 1px solid rgba(217, 207, 187, 0.74); text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: var(--muted); font-weight: 700; background: rgba(255, 250, 240, 0.82); }
+    .warnings { margin: 0; padding-left: 18px; color: var(--muted); line-height: 1.6; }
+    .heatmap {
+      display: grid;
+      grid-template-columns: 92px repeat(5, 1fr);
+      gap: 4px;
+      min-width: 520px;
+    }
+    .heat-cell, .heat-label {
+      padding: 10px 6px;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 12px;
+      background: rgba(255,255,255,0.45);
+    }
+    .heat-label { color: var(--muted); font-weight: 700; }
+    @media (max-width: 1100px) {
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .two-col { grid-template-columns: 1fr; }
+      .spread-grid, .chart-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .kpis { grid-template-columns: 1fr; }
+      .spread-grid, .chart-pair { grid-template-columns: 1fr; }
+      .status { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div style="display:flex; gap:16px; align-items:flex-start;">
+        <div class="mark">CTA</div>
+        <div>
+          <h1>Commodity CTA Monitor</h1>
+          <div class="subtitle">商品趋势因子交易看板 · 60日时间序列动量 · 20日波动率调整 · 初版公开数据验证</div>
+        </div>
+      </div>
+      <div class="status">
+        <b id="sourceLabel">数据源检测中</b>
+        <span id="generatedAt">Generated: -</span>
+        <span id="warningLine">Warnings: -</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="grid kpis" id="kpis"></section>
+
+    <section class="card section strategy-block">
+      <div class="section-head">
+        <div>
+          <div class="strategy-eyebrow">Strategy 1 · Trend CTA</div>
+          <h2>所选品种 · 趋势与仓位</h2>
+          <div class="note">信号采用 `sign(60日收益)`；权重为 `信号 / 20日年化波动率` 后归一化。</div>
+        </div>
+        <div class="note">做多/做空仅为研究信号，不是交易建议。</div>
+      </div>
+      <div class="grid instrument-grid" id="instrumentGrid"></div>
+    </section>
+
+    <section class="grid two-col" style="margin-top:18px;">
+      <div class="card section">
+        <div class="section-head">
+          <div>
+            <h2>组合净值曲线</h2>
+            <div class="note">每日收盘后形成信号，下一交易日持仓，未加入实际手续费和滑点。</div>
+          </div>
+        </div>
+        <div class="chart-box"><svg id="equityChart" viewBox="0 0 760 300"></svg></div>
+      </div>
+
+      <div class="card section">
+        <div class="section-head">
+          <div>
+            <h2>90日相关性</h2>
+            <div class="note">用于判断分散化质量和同向拥挤。</div>
+          </div>
+        </div>
+        <div style="overflow:auto;"><div class="heatmap" id="corrMap"></div></div>
+      </div>
+    </section>
+
+    <section class="card section strategy-block domestic" id="calendarSpreadSection" style="margin-top:18px; display:none;">
+      <div class="section-head">
+        <div>
+          <div class="strategy-eyebrow">Strategy 2 · Domestic Oil Spread</div>
+          <h2>境内原油月差套利</h2>
+          <div class="note">优化版：月差 z-score 极端时不直接反向，必须看到近月/远月持仓比开始反转，才做均值回归。</div>
+        </div>
+        <div class="note" id="spreadSource"></div>
+      </div>
+      <div class="grid spread-grid" id="spreadKpis"></div>
+      <div class="grid chart-pair">
+        <div>
+          <div class="note" style="padding-left:8px;">价差与60日 z-score</div>
+          <div class="chart-box"><svg id="spreadChart" viewBox="0 0 760 300"></svg></div>
+        </div>
+        <div>
+          <div class="note" style="padding-left:8px;">月差策略净值</div>
+          <div class="chart-box"><svg id="spreadEquityChart" viewBox="0 0 760 300"></svg></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card section strategy-block eia" id="eiaSpreadSection" style="margin-top:18px; display:none;">
+      <div class="section-head">
+        <div>
+          <div class="strategy-eyebrow">Strategy 3 · EIA Inventory Factor</div>
+          <h2>美国 EIA 过滤 WTI 月差套利</h2>
+          <div class="note">优化版：月差动量主导交易方向，carry 辅助，EIA库存变化作为基本面过滤；另用 VIX/OVX/DXY/GPR 做 ML overlay。</div>
+        </div>
+        <div class="note" id="eiaSpreadSource"></div>
+      </div>
+      <div class="grid spread-grid" id="eiaSpreadKpis"></div>
+      <div class="grid chart-pair">
+        <div>
+          <div class="note" style="padding-left:8px;">WTI月差、库存因子与综合得分</div>
+          <div class="chart-box"><svg id="eiaFactorChart" viewBox="0 0 760 300"></svg></div>
+        </div>
+        <div>
+          <div class="note" style="padding-left:8px;">EIA-WTI月差策略净值</div>
+          <div class="chart-box"><svg id="eiaEquityChart" viewBox="0 0 760 300"></svg></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card section strategy-block robustness" id="historicalSpreadSection" style="margin-top:18px; display:none;">
+      <div class="section-head">
+        <div>
+          <div class="strategy-eyebrow">Strategy 4 · Historical Robustness</div>
+          <h2>历史相邻月月差泛化测试</h2>
+          <div class="note">用境内 SC 已到期和挂牌相邻月合约逐对回测，检验“月差极端 + 持仓流向反转”因子是否跨月份有效。</div>
+        </div>
+        <div class="note" id="historicalSpreadSource"></div>
+      </div>
+      <div class="grid spread-grid" id="historicalSpreadKpis"></div>
+      <div class="grid chart-pair">
+        <div>
+          <div class="note" style="padding-left:8px;">Pooled robustness equity</div>
+          <div class="chart-box"><svg id="historicalSpreadChart" viewBox="0 0 760 300"></svg></div>
+        </div>
+        <div style="overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Pair</th>
+                <th>区间</th>
+                <th>净值</th>
+                <th>Sharpe</th>
+                <th>回撤</th>
+                <th>换手</th>
+              </tr>
+            </thead>
+            <tbody id="historicalSpreadRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card section">
+      <div class="section-head">
+        <div>
+          <h2>指标明细</h2>
+          <div class="note">后续可扩展 Carry、库存、期限结构、COT、ML 趋势强度等字段。</div>
+        </div>
+      </div>
+      <div style="overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>品种</th>
+              <th>板块</th>
+              <th>价格</th>
+              <th>20日</th>
+              <th>60日</th>
+              <th>120日</th>
+              <th>20日波动</th>
+              <th>52W分位</th>
+              <th>MA信号</th>
+              <th>权重</th>
+            </tr>
+          </thead>
+          <tbody id="detailRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card section">
+      <div class="section-head">
+        <div>
+          <h2>数据源状态</h2>
+          <div class="note">当前版本优先公开行情，公开接口失败时会显示 fallback 状态。</div>
+        </div>
+      </div>
+      <ul class="warnings" id="warnings"></ul>
+    </section>
+  </main>
+
+  <script>
+    const fmtPct = (x, d = 1) => x == null ? "-" : `${(x * 100).toFixed(d)}%`;
+    const fmtNum = (x, d = 2) => x == null ? "-" : Number(x).toFixed(d);
+    const cls = x => x > 0 ? "long" : x < 0 ? "short" : "flat";
+    const signText = x => x > 0 ? "做多" : x < 0 ? "做空" : "观望";
+
+    function metric(label, value, sub) {
+      return `<div class="card metric"><span>${label}</span><b>${value}</b><small>${sub}</small></div>`;
+    }
+
+    function bar(label, value, scale = 0.3) {
+      const v = value == null ? 0 : Math.max(-scale, Math.min(scale, value));
+      const width = Math.abs(v) / scale * 100;
+      const color = v >= 0 ? "var(--green)" : "var(--red)";
+      return `<div class="bar-row"><span>${label}</span><div class="track"><div class="fill" style="width:${width}%;background:${color};"></div></div><span>${fmtPct(value)}</span></div>`;
+    }
+
+    function drawEquity(curve) {
+      const svg = document.getElementById("equityChart");
+      svg.innerHTML = "";
+      if (!curve || curve.length < 2) return;
+      const w = 760, h = 300, p = 34;
+      const vals = curve.map(d => d.value).filter(v => v != null);
+      const min = Math.min(...vals), max = Math.max(...vals);
+      const y = v => h - p - ((v - min) / ((max - min) || 1)) * (h - p * 2);
+      const x = i => p + i / (curve.length - 1) * (w - p * 2);
+      const line = curve.map((d, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(d.value).toFixed(1)}`).join(" ");
+      const area = `${line} L${x(curve.length - 1)},${h - p} L${p},${h - p} Z`;
+      svg.insertAdjacentHTML("beforeend", `<path class="area" d="${area}"></path><path class="chart-line" d="${line}"></path>`);
+      svg.insertAdjacentHTML("beforeend", `<line class="axis" x1="${p}" y1="${h-p}" x2="${w-p}" y2="${h-p}"></line><line class="axis" x1="${p}" y1="${p}" x2="${p}" y2="${h-p}"></line>`);
+      svg.insertAdjacentHTML("beforeend", `<text x="${p}" y="22" font-size="12" fill="#6d736e">${fmtNum(max, 3)}</text><text x="${p}" y="${h-8}" font-size="12" fill="#6d736e">${fmtNum(min, 3)}</text>`);
+    }
+
+    function drawSeriesChart(svgId, curve, series) {
+      const svg = document.getElementById(svgId);
+      svg.innerHTML = "";
+      if (!curve || curve.length < 2) return;
+      const w = 760, h = 300, p = 34;
+      const allVals = [];
+      for (const s of series) {
+        for (const d of curve) {
+          const v = d[s.key];
+          if (v != null && Number.isFinite(v)) allVals.push(v);
+        }
+      }
+      if (!allVals.length) return;
+      const min = Math.min(...allVals), max = Math.max(...allVals);
+      const y = v => h - p - ((v - min) / ((max - min) || 1)) * (h - p * 2);
+      const x = i => p + i / (curve.length - 1) * (w - p * 2);
+      svg.insertAdjacentHTML("beforeend", `<line class="axis" x1="${p}" y1="${h-p}" x2="${w-p}" y2="${h-p}"></line><line class="axis" x1="${p}" y1="${p}" x2="${p}" y2="${h-p}"></line>`);
+      if (min < 0 && max > 0) {
+        svg.insertAdjacentHTML("beforeend", `<line x1="${p}" y1="${y(0)}" x2="${w-p}" y2="${y(0)}" stroke="#d9cfbb" stroke-width="1" stroke-dasharray="4 4"></line>`);
+      }
+      series.forEach((s, idx) => {
+        const points = curve
+          .map((d, i) => ({ i, v: d[s.key] }))
+          .filter(d => d.v != null && Number.isFinite(d.v));
+        if (!points.length) return;
+        const line = points.map((d, i) => `${i ? "L" : "M"}${x(d.i).toFixed(1)},${y(d.v).toFixed(1)}`).join(" ");
+        svg.insertAdjacentHTML("beforeend", `<path d="${line}" fill="none" stroke="${s.color}" stroke-width="${s.width || 2.2}"></path>`);
+        svg.insertAdjacentHTML("beforeend", `<text x="${w - p - 120}" y="${22 + idx * 18}" font-size="12" fill="${s.color}">${s.label}</text>`);
+      });
+      svg.insertAdjacentHTML("beforeend", `<text x="${p}" y="22" font-size="12" fill="#6d736e">${fmtNum(max, 2)}</text><text x="${p}" y="${h-8}" font-size="12" fill="#6d736e">${fmtNum(min, 2)}</text>`);
+    }
+
+    function drawCorr(payload) {
+      const host = document.getElementById("corrMap");
+      const instruments = payload.instruments.filter(d => d.status === "ok");
+      const symbols = instruments.map(d => d.data_key);
+      const names = Object.fromEntries(instruments.map(d => [d.data_key, d.symbol]));
+      const map = Object.fromEntries(payload.correlation.map(d => [`${d.left}|${d.right}`, d.value]));
+      host.style.gridTemplateColumns = `92px repeat(${symbols.length}, 1fr)`;
+      host.innerHTML = `<div class="heat-label"></div>${symbols.map(s => `<div class="heat-label">${names[s]}</div>`).join("")}`;
+      for (const r of symbols) {
+        host.insertAdjacentHTML("beforeend", `<div class="heat-label">${names[r]}</div>`);
+        for (const c of symbols) {
+          const v = map[`${r}|${c}`] ?? 0;
+          const alpha = Math.min(0.88, Math.abs(v) * 0.72 + 0.08);
+          const bg = v >= 0 ? `rgba(22,115,74,${alpha})` : `rgba(173,47,40,${alpha})`;
+          const color = Math.abs(v) > 0.45 ? "#fff" : "var(--ink)";
+          host.insertAdjacentHTML("beforeend", `<div class="heat-cell" style="background:${bg};color:${color};">${v.toFixed(2)}</div>`);
+        }
+      }
+    }
+
+    function renderCalendarSpread(spread) {
+      if (!spread) return;
+      document.getElementById("calendarSpreadSection").style.display = "block";
+      document.getElementById("spreadSource").textContent = `${spread.source} · ${spread.latest_date}`;
+      document.getElementById("spreadKpis").innerHTML = [
+        metric("合约对", `${spread.near_contract}/${spread.far_contract}`, `${spread.near_expiry} / ${spread.far_expiry}`),
+        metric("当前价差", fmtNum(spread.latest_spread, 2), `${fmtNum(spread.latest_near, 1)} - ${fmtNum(spread.latest_far, 1)}`),
+        metric("Z-Score", fmtNum(spread.latest_zscore, 2), `极端阈值 ±${spread.entry_threshold}`),
+        metric("持仓流向", fmtNum(spread.latest_hold_ratio_chg10, 3), "10日近月/远月持仓比变化"),
+        metric("当前信号", spread.signal, `净值 ${fmtNum(spread.latest_equity, 3)} · Sharpe ${fmtNum(spread.sharpe, 2)}`),
+      ].join("");
+      drawSeriesChart("spreadChart", spread.curve, [
+        { key: "spread", label: "Spread", color: "var(--blue)", width: 2.4 },
+        { key: "zscore", label: "Z-Score", color: "var(--amber)", width: 2.0 },
+        { key: "hold_ratio_chg10", label: "OI Flow", color: "var(--green)", width: 1.8 },
+      ]);
+      drawSeriesChart("spreadEquityChart", spread.curve, [
+        { key: "equity", label: "Equity", color: "var(--green)", width: 2.4 },
+      ]);
+    }
+
+    function renderEiaWtiSpread(spread) {
+      if (!spread) return;
+      document.getElementById("eiaSpreadSection").style.display = "block";
+      document.getElementById("eiaSpreadSource").textContent = `${spread.source} · ${spread.latest_date}`;
+      const weights = spread.score_weights || {};
+      const ml = spread.risk_sentiment_overlay || {};
+      document.getElementById("eiaSpreadKpis").innerHTML = [
+        metric("合约对", `${spread.near_contract}/${spread.far_contract}`, `${spread.near_name} / ${spread.far_name}`),
+        metric("当前月差", fmtNum(spread.latest_spread, 2), `${fmtNum(spread.latest_near, 2)} - ${fmtNum(spread.latest_far, 2)} · Carry ${fmtPct(spread.latest_carry, 2)}`),
+        metric("库存过滤", fmtNum(spread.latest_inventory_z, 2), `库存 ${fmtNum(spread.latest_inventory, 0)} · 滞后 ${spread.inventory_lag_days}天`),
+        metric("当前信号", spread.signal, `Score ${fmtNum(spread.latest_score, 2)} · ${spread.momentum_lookback}D动量 ${fmtNum(spread.latest_spread_momentum, 2)}`),
+        metric("风险/情绪", `VIX ${fmtNum(ml.latest_vix, 1)}`, `OVX ${fmtNum(ml.latest_ovx, 1)} · GPR ${fmtNum(ml.latest_gpr, 1)}`),
+        metric("ML信号", ml.latest_signal || "-", `预测 ${fmtNum(ml.latest_prediction, 5)} · 阈值 ${fmtNum(ml.prediction_threshold, 5)}`),
+        metric("规则净值", fmtNum(spread.latest_equity, 3), `Sharpe ${fmtNum(spread.sharpe, 2)} · DD ${fmtPct(spread.max_drawdown)}`),
+        metric("ML净值", fmtNum(ml.latest_equity, 3), `Sharpe ${fmtNum(ml.sharpe, 2)} · DD ${fmtPct(ml.max_drawdown)}`),
+      ].join("");
+      drawSeriesChart("eiaFactorChart", spread.curve, [
+        { key: "spread", label: "Spread", color: "var(--blue)", width: 2.4 },
+        { key: "inventory_z", label: "Inventory Z", color: "var(--red)", width: 1.8 },
+        { key: "score", label: "Score", color: "var(--green)", width: 2.0 },
+        { key: "ml_prediction", label: "ML Pred", color: "var(--amber)", width: 1.7 },
+      ]);
+      drawSeriesChart("eiaEquityChart", spread.curve, [
+        { key: "equity", label: "Rule Equity", color: "var(--green)", width: 2.4 },
+        { key: "ml_equity", label: "ML Equity", color: "var(--blue)", width: 2.2 },
+      ]);
+      document.getElementById("eiaSpreadSource").textContent += ` · 权重 Momentum ${fmtPct(weights.spread_momentum, 0)} / Carry ${fmtPct(weights.carry, 0)} / EIA ${fmtPct(weights.inventory, 0)}`;
+    }
+
+    function renderHistoricalSpread(test) {
+      if (!test) return;
+      document.getElementById("historicalSpreadSection").style.display = "block";
+      document.getElementById("historicalSpreadSource").textContent = `${test.source}`;
+      document.getElementById("historicalSpreadKpis").innerHTML = [
+        metric("样本数量", `${test.pair_count}组`, test.strategy),
+        metric("盈利比例", fmtPct(test.positive_pair_ratio), `中位 Sharpe ${fmtNum(test.median_pair_sharpe, 2)}`),
+        metric("Pooled净值", fmtNum(test.pooled_latest_equity, 3), `Sharpe ${fmtNum(test.pooled_sharpe, 2)} · DD ${fmtPct(test.pooled_max_drawdown)}`),
+        metric("最佳/最差", test.best_pair?.pair || "-", `${fmtNum(test.best_pair?.sharpe, 2)} / ${fmtNum(test.worst_pair?.sharpe, 2)}`),
+      ].join("");
+      drawSeriesChart("historicalSpreadChart", test.curve, [
+        { key: "equity", label: "Pooled Equity", color: "var(--red)", width: 2.4 },
+      ]);
+      const rows = (test.pairs || []).slice().sort((a, b) => (b.sharpe ?? -999) - (a.sharpe ?? -999));
+      document.getElementById("historicalSpreadRows").innerHTML = rows.map(row => `
+        <tr>
+          <td>${row.pair}</td>
+          <td>${row.start} → ${row.end}</td>
+          <td class="${cls((row.latest_equity || 0) - 1)}">${fmtNum(row.latest_equity, 3)}</td>
+          <td class="${cls(row.sharpe)}">${fmtNum(row.sharpe, 2)}</td>
+          <td>${fmtPct(row.max_drawdown)}</td>
+          <td>${fmtNum(row.turnover, 0)}</td>
+        </tr>
+      `).join("");
+    }
+
+    async function main() {
+      const payload = await fetch("commodity_cta_data.json").then(r => r.json());
+      const ok = payload.instruments.filter(d => d.status === "ok");
+      const p = payload.portfolio || {};
+
+      document.getElementById("sourceLabel").textContent = `Source: ${payload.source}`;
+      document.getElementById("generatedAt").textContent = `Generated: ${payload.generated_at}`;
+      document.getElementById("warningLine").textContent = `Warnings: ${(payload.warnings || []).length}`;
+
+      document.getElementById("kpis").innerHTML = [
+        metric("组合净值", fmtNum(p.latest_equity, 3), "TSMOM 60D"),
+        metric("年化收益", fmtPct(p.annual_return), "回测估算"),
+        metric("年化波动", fmtPct(p.realized_vol), "目标 10.0%"),
+        metric("Sharpe", fmtNum(p.sharpe, 2), "未扣交易成本"),
+        metric("最大回撤", fmtPct(p.max_drawdown), `胜率 ${fmtPct(p.hit_rate)}`),
+      ].join("");
+
+      document.getElementById("instrumentGrid").innerHTML = ok.map(d => `
+        <article class="card instrument">
+          <div class="instrument-head">
+            <div><strong>${d.name}</strong><div class="symbol">${d.symbol} · ${d.market} · ${d.sector} · ${d.data_symbol}</div></div>
+            <div class="pill ${cls(d.tsmom_signal)}">${d.cta_view}</div>
+          </div>
+          <div class="price">${fmtNum(d.last)}</div>
+          <div class="change ${cls(d.day_change)}">日涨跌 ${fmtPct(d.day_change, 2)}</div>
+          <div class="bars">
+            ${bar("20D", d.r20)}
+            ${bar("60D", d.r60)}
+            ${bar("120D", d.r120)}
+          </div>
+          <div class="instrument-foot">
+            <div class="mini"><span>20D Vol</span><b>${fmtPct(d.vol20)}</b></div>
+            <div class="mini"><span>CTA Weight</span><b>${fmtPct(d.weight)}</b></div>
+            <div class="mini"><span>52W Percentile</span><b>${fmtPct(d.percentile_52w, 0)}</b></div>
+            <div class="mini"><span>Drawdown</span><b>${fmtPct(d.drawdown)}</b></div>
+          </div>
+        </article>
+      `).join("");
+
+      document.getElementById("detailRows").innerHTML = ok.map(d => `
+        <tr>
+          <td>${d.name} <span class="note">${d.symbol}</span></td>
+          <td>${d.market} · ${d.sector}</td>
+          <td>${fmtNum(d.last)}</td>
+          <td class="${cls(d.r20)}">${fmtPct(d.r20)}</td>
+          <td class="${cls(d.r60)}">${fmtPct(d.r60)}</td>
+          <td class="${cls(d.r120)}">${fmtPct(d.r120)}</td>
+          <td>${fmtPct(d.vol20)}</td>
+          <td>${fmtPct(d.percentile_52w, 0)}</td>
+          <td><span class="pill ${cls(d.ma_signal)}">${signText(d.ma_signal)}</span></td>
+          <td class="${cls(d.weight)}">${fmtPct(d.weight)}</td>
+        </tr>
+      `).join("");
+
+      document.getElementById("warnings").innerHTML = (payload.warnings || []).map(w => `<li>${w}</li>`).join("") || "<li>公开数据源正常。</li>";
+      drawEquity(payload.equity_curve);
+      drawCorr(payload);
+      renderCalendarSpread(payload.calendar_spread);
+      renderEiaWtiSpread(payload.eia_wti_spread);
+      renderHistoricalSpread(payload.historical_spread_backtest);
+    }
+
+    main().catch(err => {
+      document.body.insertAdjacentHTML("beforeend", `<pre style="padding:20px;color:#ad2f28;">${err.stack || err}</pre>`);
+    });
+  </script>
+</body>
+</html>
