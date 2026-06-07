@@ -259,8 +259,8 @@
       <div class="section-head">
         <div>
           <div class="strategy-eyebrow">Strategy 2 · Domestic Oil Spread</div>
-          <h2>境内原油月差套利</h2>
-          <div class="note">优化版：月差 z-score 极端时不直接反向，必须看到近月/远月持仓比开始反转，才做均值回归。</div>
+          <h2>境内原油 M1-M3 月差套利</h2>
+          <div class="note">优化版：只关注近月与第三个月合约的月差；月差 z-score 极端时不直接反向，必须看到 M1/M3 持仓比开始反转，才做均值回归。</div>
         </div>
         <div class="note" id="spreadSource"></div>
       </div>
@@ -303,8 +303,8 @@
       <div class="section-head">
         <div>
           <div class="strategy-eyebrow">Strategy 4 · Historical Robustness</div>
-          <h2>历史相邻月月差泛化测试</h2>
-          <div class="note">用境内 SC 已到期和挂牌相邻月合约逐对回测，检验“月差极端 + 持仓流向反转”因子是否跨月份有效。</div>
+          <h2>历史 M1-M3 月差泛化测试</h2>
+          <div class="note">用境内 SC 已到期和挂牌 M1-M3 合约逐对回测，检验“月差极端 + 持仓流向反转”因子是否跨月份有效。</div>
         </div>
         <div class="note" id="historicalSpreadSource"></div>
       </div>
@@ -464,7 +464,7 @@
         metric("合约对", `${spread.near_contract}/${spread.far_contract}`, `${spread.near_expiry} / ${spread.far_expiry}`),
         metric("当前价差", fmtNum(spread.latest_spread, 2), `${fmtNum(spread.latest_near, 1)} - ${fmtNum(spread.latest_far, 1)}`),
         metric("Z-Score", fmtNum(spread.latest_zscore, 2), `极端阈值 ±${spread.entry_threshold}`),
-        metric("持仓流向", fmtNum(spread.latest_hold_ratio_chg10, 3), "10日近月/远月持仓比变化"),
+        metric("持仓流向", fmtNum(spread.latest_hold_ratio_chg10, 3), "10日 M1/M3 持仓比变化"),
         metric("当前信号", spread.signal, `扣费净值 ${fmtNum(spread.latest_equity, 3)} · Sharpe ${fmtNum(spread.sharpe, 2)}`),
       ].join("");
       drawSeriesChart("spreadChart", spread.curve, [
