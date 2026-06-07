@@ -459,13 +459,13 @@
     function renderCalendarSpread(spread) {
       if (!spread) return;
       document.getElementById("calendarSpreadSection").style.display = "block";
-      document.getElementById("spreadSource").textContent = `${spread.source} · ${spread.latest_date}`;
+      document.getElementById("spreadSource").textContent = `${spread.source} · ${spread.latest_date} · 费率 ${fmtNum(spread.fee_per_unit, 2)} CNY/单位/腿`;
       document.getElementById("spreadKpis").innerHTML = [
         metric("合约对", `${spread.near_contract}/${spread.far_contract}`, `${spread.near_expiry} / ${spread.far_expiry}`),
         metric("当前价差", fmtNum(spread.latest_spread, 2), `${fmtNum(spread.latest_near, 1)} - ${fmtNum(spread.latest_far, 1)}`),
         metric("Z-Score", fmtNum(spread.latest_zscore, 2), `极端阈值 ±${spread.entry_threshold}`),
         metric("持仓流向", fmtNum(spread.latest_hold_ratio_chg10, 3), "10日近月/远月持仓比变化"),
-        metric("当前信号", spread.signal, `净值 ${fmtNum(spread.latest_equity, 3)} · Sharpe ${fmtNum(spread.sharpe, 2)}`),
+        metric("当前信号", spread.signal, `扣费净值 ${fmtNum(spread.latest_equity, 3)} · Sharpe ${fmtNum(spread.sharpe, 2)}`),
       ].join("");
       drawSeriesChart("spreadChart", spread.curve, [
         { key: "spread", label: "Spread", color: "var(--blue)", width: 2.4 },
@@ -480,7 +480,7 @@
     function renderEiaWtiSpread(spread) {
       if (!spread) return;
       document.getElementById("eiaSpreadSection").style.display = "block";
-      document.getElementById("eiaSpreadSource").textContent = `${spread.source} · ${spread.latest_date}`;
+      document.getElementById("eiaSpreadSource").textContent = `${spread.source} · ${spread.latest_date} · 费率 ${fmtNum(spread.fee_per_unit, 2)} USD/单位/腿`;
       const weights = spread.score_weights || {};
       const ml = spread.risk_sentiment_overlay || {};
       document.getElementById("eiaSpreadKpis").innerHTML = [
@@ -490,8 +490,8 @@
         metric("当前信号", spread.signal, `Score ${fmtNum(spread.latest_score, 2)} · ${spread.momentum_lookback}D动量 ${fmtNum(spread.latest_spread_momentum, 2)}`),
         metric("风险/情绪", `VIX ${fmtNum(ml.latest_vix, 1)}`, `OVX ${fmtNum(ml.latest_ovx, 1)} · GPR ${fmtNum(ml.latest_gpr, 1)}`),
         metric("ML信号", ml.latest_signal || "-", `预测 ${fmtNum(ml.latest_prediction, 5)} · 阈值 ${fmtNum(ml.prediction_threshold, 5)}`),
-        metric("规则净值", fmtNum(spread.latest_equity, 3), `Sharpe ${fmtNum(spread.sharpe, 2)} · DD ${fmtPct(spread.max_drawdown)}`),
-        metric("ML净值", fmtNum(ml.latest_equity, 3), `Sharpe ${fmtNum(ml.sharpe, 2)} · DD ${fmtPct(ml.max_drawdown)}`),
+        metric("规则净值", fmtNum(spread.latest_equity, 3), `扣费后 · Sharpe ${fmtNum(spread.sharpe, 2)} · DD ${fmtPct(spread.max_drawdown)}`),
+        metric("ML净值", fmtNum(ml.latest_equity, 3), `扣费后 · Sharpe ${fmtNum(ml.sharpe, 2)} · DD ${fmtPct(ml.max_drawdown)}`),
       ].join("");
       drawSeriesChart("eiaFactorChart", spread.curve, [
         { key: "spread", label: "Spread", color: "var(--blue)", width: 2.4 },
@@ -509,11 +509,11 @@
     function renderHistoricalSpread(test) {
       if (!test) return;
       document.getElementById("historicalSpreadSection").style.display = "block";
-      document.getElementById("historicalSpreadSource").textContent = `${test.source}`;
+      document.getElementById("historicalSpreadSource").textContent = `${test.source} · 费率 ${fmtNum(test.fee_per_unit, 2)} CNY/单位/腿`;
       document.getElementById("historicalSpreadKpis").innerHTML = [
         metric("样本数量", `${test.pair_count}组`, test.strategy),
         metric("盈利比例", fmtPct(test.positive_pair_ratio), `中位 Sharpe ${fmtNum(test.median_pair_sharpe, 2)}`),
-        metric("Pooled净值", fmtNum(test.pooled_latest_equity, 3), `Sharpe ${fmtNum(test.pooled_sharpe, 2)} · DD ${fmtPct(test.pooled_max_drawdown)}`),
+        metric("Pooled净值", fmtNum(test.pooled_latest_equity, 3), `扣费后 · Sharpe ${fmtNum(test.pooled_sharpe, 2)} · DD ${fmtPct(test.pooled_max_drawdown)}`),
         metric("最佳/最差", test.best_pair?.pair || "-", `${fmtNum(test.best_pair?.sharpe, 2)} / ${fmtNum(test.worst_pair?.sharpe, 2)}`),
       ].join("");
       drawSeriesChart("historicalSpreadChart", test.curve, [
